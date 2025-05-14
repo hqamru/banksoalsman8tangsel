@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Soal - SMAN 8 KOTA TANGERANG SELATAN</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark mb-4">
+        <a class="navbar-brand" href="/">Bank Soal - SMAN 8 KOTA TANGERANG SELATAN</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse"
+            aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <a class="nav-link" href="#"> <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <h1>Form Input Soal</h1>
+                <form id="formSoal">
+                    <div class="form-group">
+                        <label for="nomor">Nomor Soal</label>
+                        <input type="text" id="nomor" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="soal">Soal</label>
+                        <textarea id="soal" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="jenis">Jenis Soal</label>
+                        <select id="jenis" class="form-control">
+                            <option value="Pilihan Ganda">Pilihan Ganda</option>
+                            <option value="Essay">Essay</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="kunci">Kunci Jawaban</label>
+                        <input type="text" id="kunci" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="materi">Materi</label>
+                        <input type="text" id="materi" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="subMateri">Sub Materi</label>
+                        <input type="text" id="subMateri" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="tingkat">Tingkat Kesulitan</label>
+                        <select id="tingkat" class="form-control">
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                            <option value="Profesional">Profesional</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Tambah Soal</button>
+                </form>
+                <hr />
+                <h2>Daftar Soal</h2>
+                <div class="form-group">
+                    <label for="searchSoal">Cari Soal:</label>
+                    <input type="text" id="searchSoal" class="form-control" placeholder="Cari berdasarkan kata kunci">
+                </div>
+                <div class="form-group">
+                    <label for="filterJenis">Filter Jenis Soal:</label>
+                    <select id="filterJenis" class="form-control">
+                        <option value="">-- Semua Jenis --</option>
+                        <option value="Pilihan Ganda">Pilihan Ganda</option>
+                        <option value="Essay">Essay</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="filterTingkat">Filter Tingkat Kesulitan:</label>
+                    <select id="filterTingkat" class="form-control">
+                        <option value="">-- Semua Tingkat --</option>
+                        <option value="Easy">Easy</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Hard">Hard</option>
+                        <option value="Profesional">Profesional</option>
+                    </select>
+                </div>
+                <div class="table-responsive">
+                    <table id="soalTable" class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Nomor</th>
+                                <th>Soal</th>
+                                <th>Jenis</th>
+                                <th>Kunci Jawaban</th>
+                                <th>Tingkat Kesulitan</th>
+                                <th>Materi</th>
+                                <th>Sub Materi</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Data Soal akan diisi di sini -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-group">
+                    <label for="itemsPerPage">Tampilkan:</label>
+                    <select id="itemsPerPage" class="form-control">
+                        <option value="10">10 Soal</option>
+                        <option value="100">100 Soal</option>
+                    </select>
+                </div>
+                <canvas id="soalChart" class="mt-4"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            let soalData = [];
+
+            // Menampilkan data soal dalam tabel
+            function loadSoalData(search = '', jenis = '', tingkat = '', limit = 10) {
+                const filteredData = soalData.filter(soal => {
+                    const isMatchSearch = soal.soal.toLowerCase().includes(search.toLowerCase());
+                    const isMatchJenis = jenis ? soal.jenis === jenis : true;
+                    const isMatchTingkat = tingkat ? soal.tingkat === tingkat : true;
+                    return isMatchSearch && isMatchJenis && isMatchTingkat;
+                }).slice(0, limit);
+
+                // Menampilkan data dalam tabel
+                const tbody = $('#soalTable tbody');
+                tbody.empty();
+                filteredData.forEach(soal => {
+                    tbody.append(`
+                        <tr>
+                            <td>${soal.nomor}</td>
+                            <td>${soal.soal}</td>
+                            <td>${soal.jenis}</td>
+                            <td>${soal.kunci}</td>
+                            <td>${soal.tingkat}</td>
+                            <td>${soal.materi}</td>
+                            <td>${soal.subMateri}</td>
+                            <td>
+                                <button class="btn btn-warning btn-sm editSoal" data-id="${soal.nomor}">Edit</button>
+                                <button class="btn btn-danger btn-sm deleteSoal" data-id="${soal.nomor}">Hapus</button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // Membuat chart
+                const chartData = {
+                    labels: ['Easy', 'Medium', 'Hard', 'Profesional'],
+                    datasets: [{
+                        label: 'Jumlah Soal Berdasarkan Kesulitan',
+                        data: [
+                            filteredData.filter(soal => soal.tingkat === 'Easy').length,
+                            filteredData.filter(soal => soal.tingkat === 'Medium').length,
+                            filteredData.filter(soal => soal.tingkat === 'Hard').length,
+                            filteredData.filter(soal => soal.tingkat === 'Profesional').length
+                        ],
+                        backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e'],
+                        hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#e0a500'],
+                    }]
+                };
+
+                const ctx = document.getElementById('soalChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'pie',
+                    data: chartData
+                });
+            }
+
+            // Menambahkan soal
+            $('#formSoal').submit(function (e) {
+                e.preventDefault();
+                const soal = {
+                    nomor: $('#nomor').val(),
+                    soal: $('#soal').val(),
+                    jenis: $('#jenis').val(),
+                    kunci: $('#kunci').val(),
+                    materi: $('#materi').val(),
+                    subMateri: $('#subMateri').val(),
+                    tingkat: $('#tingkat').val()
+                };
+                soalData.push(soal);
+                loadSoalData();
+                this.reset();  // Reset form input
+            });
+
+            // Menghapus soal
+            $(document).on('click', '.deleteSoal', function () {
+                const soalId = $(this).data('id');
+                soalData = soalData.filter(soal => soal.nomor !== soalId);
+                loadSoalData();
+            });
+
+            // Mengedit soal
+            $(document).on('click', '.editSoal', function () {
+                const soalId = $(this).data('id');
+                const soal = soalData.find(soal => soal.nomor === soalId);
+                $('#nomor').val(soal.nomor);
+                $('#soal').val(soal.soal);
+                $('#jenis').val(soal.jenis);
+                $('#kunci').val(soal.kunci);
+                $('#materi').val(soal.materi);
+                $('#subMateri').val(soal.subMateri);
+                $('#tingkat').val(soal.tingkat);
+                $('#formSoal button').text('Update Soal');
+            });
+
+            // Pencarian soal
+            $('#searchSoal').on('keyup', function () {
+                loadSoalData($(this).val(), $('#filterJenis').val(), $('#filterTingkat').val(), $('#itemsPerPage').val());
+            });
+
+            // Filter berdasarkan jenis soal
+            $('#filterJenis').on('change', function () {
+                loadSoalData($('#searchSoal').val(), $(this).val(), $('#filterTingkat').val(), $('#itemsPerPage').val());
+            });
+
+            // Filter berdasarkan tingkat kesulitan
+            $('#filterTingkat').on('change', function () {
+                loadSoalData($('#searchSoal').val(), $('#filterJenis').val(), $(this).val(), $('#itemsPerPage').val());
+            });
+
+            // Mengatur jumlah soal yang ditampilkan per halaman
+            $('#itemsPerPage').on('change', function () {
+                loadSoalData($('#searchSoal').val(), $('#filterJenis').val(), $('#filterTingkat').val(), $(this).val());
+            });
+
+            // Memuat data soal saat pertama kali halaman dibuka
+        loadSoalData();
+    });
+</script>
+
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+</body> 
+</html>
